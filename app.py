@@ -13,6 +13,7 @@ app = Flask(__name__)
 def check_website(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
+    return True
     if "Der findes ingen billetter til salg" in soup.get_text():
         # "Tickets are sold out"
         return False
