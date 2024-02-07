@@ -13,3 +13,4 @@ requests==2.31.0
 soupsieve==2.5
 urllib3==2.2.0
 yagmail==0.15.293
+gunicorn==19.7.1
