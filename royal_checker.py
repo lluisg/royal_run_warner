@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import time
 from pushbullet import Pushbullet
+import json
 
 # Function to scrape the website and check for certain conditions
 def check_website(url):
@@ -26,20 +27,28 @@ def send_notification(title, body):
 def main():
     TIME = 10
     URL = 'https://www.sportstiming.dk/event/13416/resale'
+    FILENAME = 'log_output.json'
 
     try:
+        output = {}
         while True:
             result = check_website(URL)
+            date = time.strftime("%Y-%m-%d %H:%M:%S")
+            output[str(date)] = str(result)
 
             if result:
-                print('--- result on', time.strftime("%H:%M:%S"), ':', result, '---')
                 event_title = "On sale!"
                 event_body = "Royal run on sale!"
                 send_notification(event_title, event_body)
+                print('Saaale!!!! on', date)
             else:
-                print('result on', time.strftime("%H:%M:%S"), ':', result)
+                print('.')
 
             time.sleep(TIME)  # Sleep for 30 seconds before checking again
+
+            with open(FILENAME, 'w') as f:
+                # Write the list to the file in JSON format
+                json.dump(output, f, indent=4)
 
     except KeyboardInterrupt:
         print("Script stopped by user.")
