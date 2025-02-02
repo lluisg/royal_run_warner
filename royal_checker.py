@@ -25,7 +25,7 @@ def send_pushbullet(PB, text=None, url=None, failed=False):
         PB.push_note('The Royal Run script failed', 'It failed ...', channel=PB.channels[0])
 
 def main():
-    SLEEP_TIME = 20 # time to sleep between runs in seconds, 3m
+    SLEEP_TIME = 180 # time to sleep between runs in seconds, 3m
     SLEEP_ON_FOUND = 90 # extra time to sleep if found
     URL = 'https://www.sportstiming.dk/event/15228/resale?distance=85498' # 5km run link
     LOG_FILE = './logs_messages.json'
@@ -51,7 +51,7 @@ def main():
             with open(LOG_FILE, 'w') as f:
                 json.dump(output, f, indent=4)
 
-            if True:
+            if result:
                 message = f"Royal run ticket on sale!"
                 send_pushbullet(pb, message, url=URL, failed=False)
                 print('Saaale!!!! on', date)
