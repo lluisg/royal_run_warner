@@ -1,10 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 import os
 import time
-from pushbullet import Pushbullet
+import requests
 import json
+import traceback
+
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from pushbullet import Pushbullet
 
 def check_website(url):
     response = requests.get(url)
@@ -16,19 +18,27 @@ def check_website(url):
         # "Tickets are available"
         return True
 
-def send_notification(title, body):
-    API_KEY = os.getenv("API_KEY")
-    pb = Pushbullet(API_KEY)
-    push = pb.push_note(title, body)
+def send_pushbullet(PB, text=None, url=None, failed=False):
+    if not failed:
+        PB.push_link('New ticket on sale:', url, text, channel=PB.channels[0])
+    else:
+        PB.push_note('The Royal Run script failed', 'It failed ...', channel=PB.channels[0])
 
 def main():
-    TIME = 20
-    URL = 'https://www.sportstiming.dk/event/13416/resale'
-    FILENAME = 'C:/Users/Lluis/Desktop/Projects/royal_run_warner/logs_outputs.json'
+    SLEEP_TIME = 20 # time to sleep between runs in seconds, 3m
+    SLEEP_ON_FOUND = 90 # extra time to sleep if found
+    URL = 'https://www.sportstiming.dk/event/15228/resale?distance=85498' # 5km run link
+    LOG_FILE = './logs_messages.json'
 
     try:
-        if os.path.exists(FILENAME):
-            with open(FILENAME, 'r') as file:
+        # Load parameters from the .env file
+        load_dotenv()
+        pushbullet_token = os.getenv('PB_API')
+
+        pb = Pushbullet(pushbullet_token)
+
+        if os.path.exists(LOG_FILE):
+            with open(LOG_FILE, 'r') as file:
                 output = json.load(file)
         else:
             output = {}
@@ -38,22 +48,26 @@ def main():
             date = time.strftime("%Y-%m-%d %H:%M:%S")
             output[str(date)] = str(result)
 
-            if result:
-                event_title = "On sale!"
-                event_body = "Royal run on sale!"
-                send_notification(event_title, event_body)
-                print('Saaale!!!! on', date)
-                time.sleep(70)
-            else:
-                print('.')
-
-            with open(FILENAME, 'w') as f:
+            with open(LOG_FILE, 'w') as f:
                 json.dump(output, f, indent=4)
 
-            time.sleep(TIME)
+            if True:
+                message = f"Royal run ticket on sale!"
+                send_pushbullet(pb, message, url=URL, failed=False)
+                print('Saaale!!!! on', date)
+                time.sleep(SLEEP_ON_FOUND)
+
+            time.sleep(SLEEP_TIME)
 
     except KeyboardInterrupt:
         print("Script stopped by user.")
+
+    except Exception as e:
+        print('Failed')
+        traceback.print_exc()
+        # Will try to send a notification that the script is down
+        send_pushbullet(pb, failed=True)
+
 
 if __name__ == "__main__":
     load_dotenv()
